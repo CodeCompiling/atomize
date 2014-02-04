@@ -2,6 +2,12 @@
 
 """ atomize - A simple Python package for easily generating Atom feeds. """
 
+<<<<<<< local
+=======
+from __future__ import unicode_literals
+
+import sys
+>>>>>>> other
 import datetime
 import mimetypes
 import warnings
@@ -9,6 +15,13 @@ try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
+<<<<<<< local
+=======
+try:
+    from io import BytesIO as Buffer
+except ImportError:
+    from StringIO import StringIO as Buffer
+>>>>>>> other
 
 __package_name__ = "atomize"
 __version__ = (0, 2, 0)
@@ -19,16 +32,48 @@ __all__ = ["Feed", "Entry", "AtomError", "Author", "Category", "Content",
            "Published", "Rights", "Source", "Subtitle", "Summary", "Title",
            "Updated"]
 
+<<<<<<< local
 try:
     _MIME_TYPES = set(mimetypes.types_map.itervalues())
 except AttributeError:  # python3
     _MIME_TYPES = set(mimetypes.types_map.values())
+=======
+_DEFAULT_ENCODING = "utf-8"
+>>>>>>> other
 
+<<<<<<< local
 try:
     unicode
 except NameError:  # python3
     basestring = unicode = str
+=======
+_DECODING_ERROR = \
+"""Could not decode the provided string. Please take care to only provide
+unencoded strings ('unicode' objects in Python 2.x, 'str' objects in Python 3.x)
+or, if you must, utf-8 encoded strings to the Atomize API
+>>>>>>> other
 
+<<<<<<< local
+=======
+The easiest way to do this is to determine the encoding of the string in
+question and then decode it with s.decode(encoding) when passing to the Atomize
+constructor."""
+
+def _conditional_decoding(s):
+
+    """ If the given string is binary, try to turn it into unicode.
+
+    If that fails, raise an error telling the user to provide the system with
+    an unencoded string """
+
+    if isinstance(s, bytes): # this type is str in python 2, bytes in python 3
+        try:
+            return s.decode(_DEFAULT_ENCODING)
+        except UnicodeDecodeError:
+            raise AtomError(_DECODING_ERROR)
+    else:
+        return s
+>>>>>>> other
 
 class Feed(object):
 
@@ -85,14 +130,14 @@ class Feed(object):
         self.elements = other_elts
 
         if isinstance(title, basestring):
-            self.elements["title"] = Title(title)
+            self.elements["title"] = Title(_conditional_decoding(title))
         elif isinstance(title, Title):
-            self.elements["titile"] = title
+            self.elements["title"] = title
         else:
             raise AtomError("Feed: title must be a string or a Title object")
 
         if isinstance(author, basestring):
-            self.elements["authors"] = [Author(author)]
+            self.elements["authors"] = [Author(_conditional_decoding(author))]
         elif isinstance(author, Author):
             self.elements["authors"] = [author]
         elif isinstance(author, list):
@@ -118,8 +163,14 @@ class Feed(object):
                             "object")
 
         if isinstance(self_link, basestring):
+<<<<<<< local
             self.elements["self_link"] = Link(
                 self_link, rel="self", content_type="application/atom+xml")
+=======
+            self.elements["self_link"] = Link(_conditional_decoding(self_link),
+                                              rel="self",
+                                              content_type="application/atom+xml")
+>>>>>>> other
         elif isinstance(self_link, Link) and self_link.rel == "self":
             self.elements["self_link"] = self_link
         elif self_link is None:
@@ -129,7 +180,7 @@ class Feed(object):
                             "object with a rel attribute of 'self'")
 
         if isinstance(guid, basestring):
-            self.elements["id"] = ID(guid)
+            self.elements["id"] = ID(_conditional_decoding(guid))
         elif isinstance(guid, ID):
             self.elements["id"] = guid
         else:
@@ -159,24 +210,34 @@ class Feed(object):
 
         return ET.ElementTree(feed)
 
-    def _write_to_file(self, file_object, encoding):
+    def _write_to_file(self, file_object, encoding=_DEFAULT_ENCODING):
 
         """ Writes the tree into the given file object """
 
         self.publish().write(file_object, xml_declaration=True,
                              encoding=encoding)
 
-    def write_file(self, filename, encoding="utf-8"):
+    def write_file(self, filename, encoding=_DEFAULT_ENCODING):
 
         """ Writes the Atom feed to the filename given """
 
+<<<<<<< local
         self.publish().write(filename, xml_declaration=True, encoding=encoding)
+=======
+        out = open(filename, "w")
+        self._write_to_file(out, encoding)
+        out.close()
+>>>>>>> other
 
-    def feed_string(self, encoding="utf-8"):
+    def feed_string(self, encoding=_DEFAULT_ENCODING):
 
         """ Returns a string of the Atom feed """
 
+<<<<<<< local
         return ET.tostring(self.publish().getroot(), encoding=encoding)
+=======
+        return ET.tostring(self.publish(), encoding)
+>>>>>>> other
 
 
 class AtomPerson(object):
@@ -192,13 +253,9 @@ class AtomPerson(object):
         Takes a name and (optionally) a uri and email address, all as strings.
         These strings will be automatically escaped. """
 
-        self.name = name
-        self.uri = uri
-        self.email = email
-        if uri:
-            self.uri = uri
-        if email:
-            self.email = email
+        self.name = _conditional_decoding(name)
+        self.uri = _conditional_decoding(uri)
+        self.email = _conditional_decoding(email)
 
     def publish(self, parent):
 
@@ -242,9 +299,17 @@ class AtomText(object):
         an encapsulating div will automatically be included. If the title
         is html, it will be automatically escaped. """
 
+<<<<<<< local
         self.content_type = content_type
         if content_type in ("text", "html", "xhtml"):
             self.content = content
+=======
+        self.content_type = _conditional_decoding(content_type)
+        if content_type == "text" or content_type == "html":
+            self.content = _conditional_decoding(content)
+        elif content_type == "xhtml":
+            self.content = '<div>%s</div>' % _conditional_decoding(content)
+>>>>>>> other
         else:
             raise AtomError("%s: content_type must be 'text', 'html' or " +
                             "'xhtml'" % self.__class__.__name__)
@@ -256,7 +321,18 @@ class AtomText(object):
         elt = ET.SubElement(parent, self.__class__.__name__.lower())
         elt.attrib["type"] = self.content_type
         if self.content_type == "xhtml":
+<<<<<<< local
             div = ET.fromstring("<div>%s</div>" % self.content)
+=======
+
+            # Kludge to turn xhtml into XML objects
+            content_string = Buffer()
+            content_string.write(self.content.encode(_DEFAULT_ENCODING))
+            content_string.seek(0)
+            div_tree = ET.parse(content_string,
+                                parser=ET.XMLParser(encoding=_DEFAULT_ENCODING))
+            div = div_tree.getroot()
+>>>>>>> other
             div.attrib["xmlns"] = "http://www.w3.org/1999/xhtml"
             elt.append(div)
         else:
@@ -303,6 +379,21 @@ class Content(object):
 
         Unless the type is an atom media type, content must be defined. """
 
+<<<<<<< local
+=======
+        try:
+            if content_type == "text" or content_type == "html":
+                self.content = _conditional_decoding(content)
+            elif content_type == "xhtml":
+                self.content = '<div>%s</div>' % _conditional_decoding(content)
+        except TypeError:
+            raise AtomError("Content: Must have content defined if the type " +
+                            "is xhtml, html, or text")
+
+        self.type = _conditional_decoding(content_type)
+        self.src = _conditional_decoding(src)
+
+>>>>>>> other
         if src and content:
             raise AtomError("Content: Cannot have both src and content " +
                             "defined")
@@ -326,8 +417,20 @@ class Content(object):
         """ Used in building the Atom feed's XML Element Tree """
 
         elt = ET.SubElement(parent, "content")
+<<<<<<< local
         if self.type == "xhtml":
             div = ET.fromstring("<div>%s</div>" % self.content)
+=======
+        if self.content and self.type == "xhtml":
+
+            # Kludge to turn xhtml into XML objects
+            content_string = Buffer()
+            content_string.write(self.content.encode(_DEFAULT_ENCODING))
+            content_string.seek(0)
+            div_tree = ET.parse(content_string,
+                                parser=ET.XMLParser(encoding=_DEFAULT_ENCODING))
+            div = div_tree.getroot()
+>>>>>>> other
             div.attrib["xmlns"] = "http://www.w3.org/1999/xhtml"
             elt.append(div)
         elif self.content:
@@ -348,7 +451,11 @@ class AtomDate(object):
 
         The date parameter must be a datetime. """
 
+<<<<<<< local
         self.date = date.isoformat()
+=======
+        self.date = _conditional_decoding(date.strftime("%Y-%m-%dT%H:%M:%SZ"))
+>>>>>>> other
 
     def publish(self, parent):
 
@@ -382,7 +489,7 @@ class AtomURI(object):
 
         The uri argument must be a string and is assumed to be a proper URI."""
 
-        self.uri = uri
+        self.uri = _conditional_decoding(uri)
 
     def publish(self, parent):
 
@@ -419,9 +526,9 @@ class Generator(object):
 
     def __init__(self, name, version=None, uri=None):
 
-        self.name = name
-        self.version = version
-        self.uri = uri
+        self.name = _conditional_decoding(name)
+        self.version = _conditional_decoding(version)
+        self.uri = _conditional_decoding(uri)
 
     def publish(self, parent):
 
@@ -441,9 +548,9 @@ class Category(object):
 
     def __init__(self, term, scheme=None, label=None):
 
-        self.term = term
-        self.scheme = scheme
-        self.label = label
+        self.term = _conditional_decoding(term)
+        self.scheme = _conditional_decoding(scheme)
+        self.label = _conditional_decoding(label)
 
     def publish(self, parent):
 
@@ -463,12 +570,12 @@ class Link(object):
 
     def __init__(self, href, rel=None, content_type=None, hreflang=None,
                  title=None, length=None):
-        self.href = href
-        self.rel = rel
-        self.content_type = content_type
-        self.hreflang = hreflang
-        self.title = title
-        self.length = length
+        self.href = _conditional_decoding(href)
+        self.rel = _conditional_decoding(rel)
+        self.content_type = _conditional_decoding(content_type)
+        self.hreflang = _conditional_decoding(hreflang)
+        self.title = conditional_decoding(title)
+        self.length = conditional_decoding(length)
 
     def publish(self, parent):
 
@@ -540,14 +647,14 @@ class Entry(object):
         self.elements = other_elts
 
         if isinstance(title, basestring):
-            self.elements["title"] = Title(title)
+            self.elements["title"] = _conditional_decoding(Title(title))
         elif isinstance(title, Title):
             self.elements["titile"] = title
         else:
             raise AtomError("Entry: title must be a string or a Title object")
 
         if isinstance(author, basestring):
-            self.elements["authors"] = [Author(author)]
+            self.elements["authors"] = [Author(_conditional_decoding(author))]
         elif isinstance(author, Author):
             self.elements["authors"] = [author]
         elif isinstance(author, list):
@@ -567,7 +674,7 @@ class Entry(object):
                             "Updated object")
 
         if isinstance(guid, basestring):
-            self.elements["id"] = ID(guid)
+            self.elements["id"] = ID(_conditional_decoding(guid))
         elif isinstance(guid, ID):
             self.elements["id"] = guid
         else:
@@ -631,7 +738,7 @@ class Source(object):
         self.elements = other_elts
 
         if isinstance(title, basestring):
-            self.elements["title"] = Title(title)
+            self.elements["title"] = Title(_conditional_decoding(title))
         elif isinstance(title, Title):
             self.elements["titile"] = title
         elif title is None:
@@ -640,7 +747,7 @@ class Source(object):
             raise AtomError("Entry: title must be a string or a Title object")
 
         if isinstance(author, basestring):
-            self.elements["authors"] = [Author(author)]
+            self.elements["authors"] = [Author(_conditional_decoding(author))]
         elif isinstance(author, Author):
             self.elements["authors"] = [author]
         elif isinstance(author, list):
@@ -662,7 +769,7 @@ class Source(object):
                             "Updated object")
 
         if isinstance(guid, basestring):
-            self.elements["id"] = ID(guid)
+            self.elements["id"] = ID(_conditional_decoding(guid))
         elif isinstance(guid, ID):
             self.elements["id"] = guid
         elif id is None:
