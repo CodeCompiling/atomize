@@ -3,7 +3,7 @@
 from distutils.core import setup
 import sys
 
-sys.path.append("atomize")
+sys.path = ["atomize"] + sys.path
 import atomize
 
 setup(name="atomize",

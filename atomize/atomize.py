@@ -113,8 +113,8 @@ class Feed(object):
                             "object")
 
         if isinstance(self_link, basestring):
-            self.elements["self_link"] = Link(self_link, rel="self",
-                                              content_type="application/atom+xml")
+            self.elements["self_link"] = Link(
+                self_link, rel="self", content_type="application/atom+xml")
         elif isinstance(self_link, Link) and self_link.rel == "self":
             self.elements["self_link"] = self_link
         elif self_link is None:
@@ -159,7 +159,7 @@ class Feed(object):
         """ Writes the tree into the given file object """
 
         self.publish().write(file_object, xml_declaration=True,
-                              encoding=encoding)
+                             encoding=encoding)
 
     def write_file(self, filename, encoding="utf-8"):
 
@@ -362,7 +362,7 @@ class AtomDate(object):
 
     def publish(self, parent):
 
-        " Used in building the Atom feed's XML Element Tree """
+        """ Used in building the Atom feed's XML Element Tree """
 
         elt = ET.SubElement(parent, self.__class__.__name__.lower())
         elt.text = self.date
