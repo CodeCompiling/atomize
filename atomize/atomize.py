@@ -345,9 +345,9 @@ class AtomDate(object):
 
         """ Initializes date object.
 
-        The date parameter must be a datetime. It is assumed to be in UTC. """
+        The date parameter must be a datetime. """
 
-        self.date = date.strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.date = date.isoformat()
 
     def publish(self, parent):
 
