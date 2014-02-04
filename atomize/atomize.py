@@ -2,12 +2,6 @@
 
 """ atomize - A simple Python package for easily generating Atom feeds. """
 
-<<<<<<< local
-=======
-from __future__ import unicode_literals
-
-import sys
->>>>>>> other
 import datetime
 import mimetypes
 import warnings
@@ -15,13 +9,6 @@ try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
-<<<<<<< local
-=======
-try:
-    from io import BytesIO as Buffer
-except ImportError:
-    from StringIO import StringIO as Buffer
->>>>>>> other
 
 __package_name__ = "atomize"
 __version__ = (0, 2, 0)
@@ -32,48 +19,15 @@ __all__ = ["Feed", "Entry", "AtomError", "Author", "Category", "Content",
            "Published", "Rights", "Source", "Subtitle", "Summary", "Title",
            "Updated"]
 
-<<<<<<< local
 try:
     _MIME_TYPES = set(mimetypes.types_map.itervalues())
 except AttributeError:  # python3
     _MIME_TYPES = set(mimetypes.types_map.values())
-=======
-_DEFAULT_ENCODING = "utf-8"
->>>>>>> other
 
-<<<<<<< local
 try:
     unicode
 except NameError:  # python3
     basestring = unicode = str
-=======
-_DECODING_ERROR = \
-"""Could not decode the provided string. Please take care to only provide
-unencoded strings ('unicode' objects in Python 2.x, 'str' objects in Python 3.x)
-or, if you must, utf-8 encoded strings to the Atomize API
->>>>>>> other
-
-<<<<<<< local
-=======
-The easiest way to do this is to determine the encoding of the string in
-question and then decode it with s.decode(encoding) when passing to the Atomize
-constructor."""
-
-def _conditional_decoding(s):
-
-    """ If the given string is binary, try to turn it into unicode.
-
-    If that fails, raise an error telling the user to provide the system with
-    an unencoded string """
-
-    if isinstance(s, bytes): # this type is str in python 2, bytes in python 3
-        try:
-            return s.decode(_DEFAULT_ENCODING)
-        except UnicodeDecodeError:
-            raise AtomError(_DECODING_ERROR)
-    else:
-        return s
->>>>>>> other
 
 class Feed(object):
 
@@ -163,14 +117,8 @@ class Feed(object):
                             "object")
 
         if isinstance(self_link, basestring):
-<<<<<<< local
             self.elements["self_link"] = Link(
                 self_link, rel="self", content_type="application/atom+xml")
-=======
-            self.elements["self_link"] = Link(_conditional_decoding(self_link),
-                                              rel="self",
-                                              content_type="application/atom+xml")
->>>>>>> other
         elif isinstance(self_link, Link) and self_link.rel == "self":
             self.elements["self_link"] = self_link
         elif self_link is None:
@@ -221,23 +169,13 @@ class Feed(object):
 
         """ Writes the Atom feed to the filename given """
 
-<<<<<<< local
         self.publish().write(filename, xml_declaration=True, encoding=encoding)
-=======
-        out = open(filename, "w")
-        self._write_to_file(out, encoding)
-        out.close()
->>>>>>> other
 
     def feed_string(self, encoding=_DEFAULT_ENCODING):
 
         """ Returns a string of the Atom feed """
 
-<<<<<<< local
         return ET.tostring(self.publish().getroot(), encoding=encoding)
-=======
-        return ET.tostring(self.publish(), encoding)
->>>>>>> other
 
 
 class AtomPerson(object):
@@ -299,17 +237,9 @@ class AtomText(object):
         an encapsulating div will automatically be included. If the title
         is html, it will be automatically escaped. """
 
-<<<<<<< local
         self.content_type = content_type
         if content_type in ("text", "html", "xhtml"):
             self.content = content
-=======
-        self.content_type = _conditional_decoding(content_type)
-        if content_type == "text" or content_type == "html":
-            self.content = _conditional_decoding(content)
-        elif content_type == "xhtml":
-            self.content = '<div>%s</div>' % _conditional_decoding(content)
->>>>>>> other
         else:
             raise AtomError("%s: content_type must be 'text', 'html' or " +
                             "'xhtml'" % self.__class__.__name__)
@@ -321,18 +251,7 @@ class AtomText(object):
         elt = ET.SubElement(parent, self.__class__.__name__.lower())
         elt.attrib["type"] = self.content_type
         if self.content_type == "xhtml":
-<<<<<<< local
             div = ET.fromstring("<div>%s</div>" % self.content)
-=======
-
-            # Kludge to turn xhtml into XML objects
-            content_string = Buffer()
-            content_string.write(self.content.encode(_DEFAULT_ENCODING))
-            content_string.seek(0)
-            div_tree = ET.parse(content_string,
-                                parser=ET.XMLParser(encoding=_DEFAULT_ENCODING))
-            div = div_tree.getroot()
->>>>>>> other
             div.attrib["xmlns"] = "http://www.w3.org/1999/xhtml"
             elt.append(div)
         else:
@@ -379,21 +298,6 @@ class Content(object):
 
         Unless the type is an atom media type, content must be defined. """
 
-<<<<<<< local
-=======
-        try:
-            if content_type == "text" or content_type == "html":
-                self.content = _conditional_decoding(content)
-            elif content_type == "xhtml":
-                self.content = '<div>%s</div>' % _conditional_decoding(content)
-        except TypeError:
-            raise AtomError("Content: Must have content defined if the type " +
-                            "is xhtml, html, or text")
-
-        self.type = _conditional_decoding(content_type)
-        self.src = _conditional_decoding(src)
-
->>>>>>> other
         if src and content:
             raise AtomError("Content: Cannot have both src and content " +
                             "defined")
@@ -417,20 +321,8 @@ class Content(object):
         """ Used in building the Atom feed's XML Element Tree """
 
         elt = ET.SubElement(parent, "content")
-<<<<<<< local
         if self.type == "xhtml":
             div = ET.fromstring("<div>%s</div>" % self.content)
-=======
-        if self.content and self.type == "xhtml":
-
-            # Kludge to turn xhtml into XML objects
-            content_string = Buffer()
-            content_string.write(self.content.encode(_DEFAULT_ENCODING))
-            content_string.seek(0)
-            div_tree = ET.parse(content_string,
-                                parser=ET.XMLParser(encoding=_DEFAULT_ENCODING))
-            div = div_tree.getroot()
->>>>>>> other
             div.attrib["xmlns"] = "http://www.w3.org/1999/xhtml"
             elt.append(div)
         elif self.content:
@@ -451,11 +343,7 @@ class AtomDate(object):
 
         The date parameter must be a datetime. """
 
-<<<<<<< local
         self.date = date.isoformat()
-=======
-        self.date = _conditional_decoding(date.strftime("%Y-%m-%dT%H:%M:%SZ"))
->>>>>>> other
 
     def publish(self, parent):
 
