@@ -178,6 +178,7 @@ class Feed(object):
 
         return ET.tostring(self.publish().getroot(), encoding=encoding)
 
+
 class AtomPerson(object):
 
     """ Represents a person or similar entity (corp, etc).
@@ -316,8 +317,8 @@ class Content(object):
             self.content = content
             self.src = src
         else:
-            raise AtomError("Content: Invalid content_type '%s'" % content_type)
-
+            raise AtomError("Content: Invalid content_type '%s'"
+                            % content_type)
         self.type = content_type
 
     def publish(self, parent):
