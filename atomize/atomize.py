@@ -2,27 +2,32 @@
 
 """ atomize - A simple Python package for easily generating Atom feeds. """
 
-import sys
 import datetime
-import codecs
+import mimetypes
+import warnings
 try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
-
 
 __package_name__ = "atomize"
-__version__ = (0, 1, 1)
+__version__ = (0, 2, 0)
 __author__ = "Christopher Wienberg <cwienberg@ict.usc.edu>"
 
 __all__ = ["Feed", "Entry", "AtomError", "Author", "Category", "Content",
            "Contributor", "Generator", "Icon", "ID", "Link", "Logo",
            "Published", "Rights", "Source", "Subtitle", "Summary", "Title",
            "Updated"]
+
+try:
+    _MIME_TYPES = set(mimetypes.types_map.itervalues())
+except AttributeError:  # python3
+    _MIME_TYPES = set(mimetypes.types_map.values())
+
+try:
+    unicode
+except NameError:  # python3
+    basestring = unicode = str
 
 
 class Feed(object):
@@ -94,7 +99,7 @@ class Feed(object):
             self.elements["authors"] = author
         elif author is None:
             if len(entries) == 0:
-                raise AtomError("Feed: not entries defined and " +
+                raise AtomError("Feed: no entries defined and " +
                                 "no authors are defined for feed")
             for entry in entries:
                 if "authors" not in entry.elements:
@@ -118,7 +123,7 @@ class Feed(object):
         elif isinstance(self_link, Link) and self_link.rel == "self":
             self.elements["self_link"] = self_link
         elif self_link is None:
-            sys.stderr.write("Warning: Feed defined without a self_link\n")
+            warnings.warn("Feed defined without a self_link")
         else:
             raise AtomError("Feed: self_link must be a string or a Link " +
                             "object with a rel attribute of 'self'")
@@ -165,18 +170,13 @@ class Feed(object):
 
         """ Writes the Atom feed to the filename given """
 
-        out = codecs.open(filename, "w", encoding=encoding)
-        self._write_to_file(out, encoding)
-        out.close()
+        self.publish().write(filename, xml_declaration=True, encoding=encoding)
 
     def feed_string(self, encoding="utf-8"):
 
         """ Returns a string of the Atom feed """
 
-        feed_string = StringIO.StringIO()
-        self._write_to_file(codecs.getwriter(encoding)(feed_string), encoding)
-        return feed_string.getvalue()
-
+        return ET.tostring(self.publish().getroot(), encoding=encoding)
 
 class AtomPerson(object):
 
@@ -242,10 +242,8 @@ class AtomText(object):
         is html, it will be automatically escaped. """
 
         self.content_type = content_type
-        if content_type == "text" or content_type == "html":
+        if content_type in ("text", "html", "xhtml"):
             self.content = content
-        elif content_type == "xhtml":
-            self.content = '<div>%s</div>' % content
         else:
             raise AtomError("%s: content_type must be 'text', 'html' or " +
                             "'xhtml'" % self.__class__.__name__)
@@ -257,12 +255,7 @@ class AtomText(object):
         elt = ET.SubElement(parent, self.__class__.__name__.lower())
         elt.attrib["type"] = self.content_type
         if self.content_type == "xhtml":
-            content_string = StringIO.StringIO()
-            content_string.write(self.content)
-            content_string.seek(0)
-            reader = codecs.getreader("utf-8")(content_string)
-            tree = ET.parse(reader, parser=ET.XMLParser(encoding="utf-8"))
-            div = tree.getroot()
+            div = ET.fromstring("<div>%s</div>" % self.content)
             div.attrib["xmlns"] = "http://www.w3.org/1999/xhtml"
             elt.append(div)
         else:
@@ -309,35 +302,31 @@ class Content(object):
 
         Unless the type is an atom media type, content must be defined. """
 
-        try:
-            if content_type == "text" or content_type == "html":
-                self.content = content
-            elif content_type == "xhtml":
-                self.content = '<div>%s</div>' % content
-        except TypeError:
-            raise AtomError("Content: Must have content defined if the type " +
-                            "is xhtml, html, or text")
-
-        self.type = content_type
-        self.src = src
-
         if src and content:
             raise AtomError("Content: Cannot have both src and content " +
                             "defined")
+
+        if content_type in ("xhtml", "html", "text"):
+            if content is None:
+                raise AtomError("Content: Must have content defined if the "
+                                "type is xhtml, html, or text")
+            self.content = content
+            self.src = None
+        elif content_type in _MIME_TYPES:
+            self.content = content
+            self.src = src
+        else:
+            raise AtomError("Content: Invalid content_type '%s'" % content_type)
+
+        self.type = content_type
 
     def publish(self, parent):
 
         """ Used in building the Atom feed's XML Element Tree """
 
         elt = ET.SubElement(parent, "content")
-        if self.content and self.type == "xhtml":
-            content_string = StringIO.StringIO()
-            content_string.write(self.content)
-            content_string.seek(0)
-            content_reader = codecs.getreader("utf-8")(content_string)
-            div_tree = ET.parse(content_reader,
-                                parser=ET.XMLParser(encoding="utf-8"))
-            div = div_tree.getroot()
+        if self.type == "xhtml":
+            div = ET.fromstring("<div>%s</div>" % self.content)
             div.attrib["xmlns"] = "http://www.w3.org/1999/xhtml"
             elt.append(div)
         elif self.content:
@@ -635,8 +624,8 @@ class Source(object):
                        Rights object """
 
         if title is None or guid is None or updated is None:
-            sys.stdout.write("Warning: it is recommended you define a " +
-                             "title, guid, and source for a Source object\n")
+            warnings.warn("it is recommended you define a "
+                          "title, guid, and source for a Source object")
 
         self.elements = other_elts
 
