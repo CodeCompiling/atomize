@@ -29,6 +29,7 @@ try:
 except NameError:  # python3
     basestring = unicode = str
 
+
 class Feed(object):
 
     """ Representation for an Atom feed.
@@ -84,14 +85,14 @@ class Feed(object):
         self.elements = other_elts
 
         if isinstance(title, basestring):
-            self.elements["title"] = Title(_conditional_decoding(title))
+            self.elements["title"] = Title(title)
         elif isinstance(title, Title):
-            self.elements["title"] = title
+            self.elements["titile"] = title
         else:
             raise AtomError("Feed: title must be a string or a Title object")
 
         if isinstance(author, basestring):
-            self.elements["authors"] = [Author(_conditional_decoding(author))]
+            self.elements["authors"] = [Author(author)]
         elif isinstance(author, Author):
             self.elements["authors"] = [author]
         elif isinstance(author, list):
@@ -128,7 +129,7 @@ class Feed(object):
                             "object with a rel attribute of 'self'")
 
         if isinstance(guid, basestring):
-            self.elements["id"] = ID(_conditional_decoding(guid))
+            self.elements["id"] = ID(guid)
         elif isinstance(guid, ID):
             self.elements["id"] = guid
         else:
@@ -158,20 +159,20 @@ class Feed(object):
 
         return ET.ElementTree(feed)
 
-    def _write_to_file(self, file_object, encoding=_DEFAULT_ENCODING):
+    def _write_to_file(self, file_object, encoding):
 
         """ Writes the tree into the given file object """
 
         self.publish().write(file_object, xml_declaration=True,
                              encoding=encoding)
 
-    def write_file(self, filename, encoding=_DEFAULT_ENCODING):
+    def write_file(self, filename, encoding="utf-8"):
 
         """ Writes the Atom feed to the filename given """
 
         self.publish().write(filename, xml_declaration=True, encoding=encoding)
 
-    def feed_string(self, encoding=_DEFAULT_ENCODING):
+    def feed_string(self, encoding="utf-8"):
 
         """ Returns a string of the Atom feed """
 
@@ -191,9 +192,13 @@ class AtomPerson(object):
         Takes a name and (optionally) a uri and email address, all as strings.
         These strings will be automatically escaped. """
 
-        self.name = _conditional_decoding(name)
-        self.uri = _conditional_decoding(uri)
-        self.email = _conditional_decoding(email)
+        self.name = name
+        self.uri = uri
+        self.email = email
+        if uri:
+            self.uri = uri
+        if email:
+            self.email = email
 
     def publish(self, parent):
 
@@ -377,7 +382,7 @@ class AtomURI(object):
 
         The uri argument must be a string and is assumed to be a proper URI."""
 
-        self.uri = _conditional_decoding(uri)
+        self.uri = uri
 
     def publish(self, parent):
 
@@ -414,9 +419,9 @@ class Generator(object):
 
     def __init__(self, name, version=None, uri=None):
 
-        self.name = _conditional_decoding(name)
-        self.version = _conditional_decoding(version)
-        self.uri = _conditional_decoding(uri)
+        self.name = name
+        self.version = version
+        self.uri = uri
 
     def publish(self, parent):
 
@@ -436,9 +441,9 @@ class Category(object):
 
     def __init__(self, term, scheme=None, label=None):
 
-        self.term = _conditional_decoding(term)
-        self.scheme = _conditional_decoding(scheme)
-        self.label = _conditional_decoding(label)
+        self.term = term
+        self.scheme = scheme
+        self.label = label
 
     def publish(self, parent):
 
@@ -458,12 +463,12 @@ class Link(object):
 
     def __init__(self, href, rel=None, content_type=None, hreflang=None,
                  title=None, length=None):
-        self.href = _conditional_decoding(href)
-        self.rel = _conditional_decoding(rel)
-        self.content_type = _conditional_decoding(content_type)
-        self.hreflang = _conditional_decoding(hreflang)
-        self.title = conditional_decoding(title)
-        self.length = conditional_decoding(length)
+        self.href = href
+        self.rel = rel
+        self.content_type = content_type
+        self.hreflang = hreflang
+        self.title = title
+        self.length = length
 
     def publish(self, parent):
 
@@ -535,14 +540,14 @@ class Entry(object):
         self.elements = other_elts
 
         if isinstance(title, basestring):
-            self.elements["title"] = _conditional_decoding(Title(title))
+            self.elements["title"] = Title(title)
         elif isinstance(title, Title):
             self.elements["titile"] = title
         else:
             raise AtomError("Entry: title must be a string or a Title object")
 
         if isinstance(author, basestring):
-            self.elements["authors"] = [Author(_conditional_decoding(author))]
+            self.elements["authors"] = [Author(author)]
         elif isinstance(author, Author):
             self.elements["authors"] = [author]
         elif isinstance(author, list):
@@ -562,7 +567,7 @@ class Entry(object):
                             "Updated object")
 
         if isinstance(guid, basestring):
-            self.elements["id"] = ID(_conditional_decoding(guid))
+            self.elements["id"] = ID(guid)
         elif isinstance(guid, ID):
             self.elements["id"] = guid
         else:
@@ -626,7 +631,7 @@ class Source(object):
         self.elements = other_elts
 
         if isinstance(title, basestring):
-            self.elements["title"] = Title(_conditional_decoding(title))
+            self.elements["title"] = Title(title)
         elif isinstance(title, Title):
             self.elements["titile"] = title
         elif title is None:
@@ -635,7 +640,7 @@ class Source(object):
             raise AtomError("Entry: title must be a string or a Title object")
 
         if isinstance(author, basestring):
-            self.elements["authors"] = [Author(_conditional_decoding(author))]
+            self.elements["authors"] = [Author(author)]
         elif isinstance(author, Author):
             self.elements["authors"] = [author]
         elif isinstance(author, list):
@@ -657,7 +662,7 @@ class Source(object):
                             "Updated object")
 
         if isinstance(guid, basestring):
-            self.elements["id"] = ID(_conditional_decoding(guid))
+            self.elements["id"] = ID(guid)
         elif isinstance(guid, ID):
             self.elements["id"] = guid
         elif id is None:
