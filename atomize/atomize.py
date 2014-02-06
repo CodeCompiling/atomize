@@ -161,7 +161,9 @@ class Feed(object):
 
     def _write_to_file(self, file_object, encoding):
 
-        """ Writes the tree into the given file object """
+        """ Writes the tree into the given file object.
+
+        In Python 3, must be opened in binary (b) mode """
 
         self.publish().write(file_object, xml_declaration=True,
                              encoding=encoding)
