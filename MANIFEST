@@ -1,2 +1,5 @@
+LICENSE
+README
 setup.py
-atomize/atomize.py
+src2/atomize.py
+src3/atomize.py

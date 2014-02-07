@@ -19,15 +19,7 @@ __all__ = ["Feed", "Entry", "AtomError", "Author", "Category", "Content",
            "Published", "Rights", "Source", "Subtitle", "Summary", "Title",
            "Updated"]
 
-try:
-    _MIME_TYPES = set(mimetypes.types_map.itervalues())
-except AttributeError:  # python3
-    _MIME_TYPES = set(mimetypes.types_map.values())
-
-try:
-    unicode
-except NameError:  # python3
-    basestring = unicode = str
+_MIME_TYPES = set(mimetypes.types_map.values())
 
 
 class Feed(object):
@@ -84,14 +76,14 @@ class Feed(object):
 
         self.elements = other_elts
 
-        if isinstance(title, basestring):
+        if isinstance(title, str):
             self.elements["title"] = Title(title)
         elif isinstance(title, Title):
             self.elements["titile"] = title
         else:
             raise AtomError("Feed: title must be a string or a Title object")
 
-        if isinstance(author, basestring):
+        if isinstance(author, str):
             self.elements["authors"] = [Author(author)]
         elif isinstance(author, Author):
             self.elements["authors"] = [author]
@@ -117,7 +109,7 @@ class Feed(object):
             raise AtomError("Feed: updated must be a datetime or an Updated " +
                             "object")
 
-        if isinstance(self_link, basestring):
+        if isinstance(self_link, str):
             self.elements["self_link"] = Link(
                 self_link, rel="self", content_type="application/atom+xml")
         elif isinstance(self_link, Link) and self_link.rel == "self":
@@ -128,7 +120,7 @@ class Feed(object):
             raise AtomError("Feed: self_link must be a string or a Link " +
                             "object with a rel attribute of 'self'")
 
-        if isinstance(guid, basestring):
+        if isinstance(guid, str):
             self.elements["id"] = ID(guid)
         elif isinstance(guid, ID):
             self.elements["id"] = guid
@@ -176,7 +168,7 @@ class Feed(object):
 
     def feed_string(self, encoding="utf-8"):
 
-        """ Returns a string of the Atom feed """
+        """ Returns an encoded string (bytes) of the Atom feed """
 
         return ET.tostring(self.publish().getroot(), encoding=encoding)
 
@@ -541,14 +533,14 @@ class Entry(object):
 
         self.elements = other_elts
 
-        if isinstance(title, basestring):
+        if isinstance(title, str):
             self.elements["title"] = Title(title)
         elif isinstance(title, Title):
             self.elements["titile"] = title
         else:
             raise AtomError("Entry: title must be a string or a Title object")
 
-        if isinstance(author, basestring):
+        if isinstance(author, str):
             self.elements["authors"] = [Author(author)]
         elif isinstance(author, Author):
             self.elements["authors"] = [author]
@@ -568,7 +560,7 @@ class Entry(object):
             raise AtomError("Entry: updated must be a datetime or an " +
                             "Updated object")
 
-        if isinstance(guid, basestring):
+        if isinstance(guid, str):
             self.elements["id"] = ID(guid)
         elif isinstance(guid, ID):
             self.elements["id"] = guid
@@ -590,7 +582,7 @@ class Entry(object):
 
 class Source(object):
 
-    """ Defines an Atom source (ie an article, post, etc) """
+    """ Defines an Atom source (e.g. an article, post, etc.) """
 
     def __init__(self, title=None, guid=None, updated=None, author=None,
                  **other_elts):
@@ -632,7 +624,7 @@ class Source(object):
 
         self.elements = other_elts
 
-        if isinstance(title, basestring):
+        if isinstance(title, str):
             self.elements["title"] = Title(title)
         elif isinstance(title, Title):
             self.elements["titile"] = title
@@ -641,7 +633,7 @@ class Source(object):
         else:
             raise AtomError("Entry: title must be a string or a Title object")
 
-        if isinstance(author, basestring):
+        if isinstance(author, str):
             self.elements["authors"] = [Author(author)]
         elif isinstance(author, Author):
             self.elements["authors"] = [author]
@@ -663,7 +655,7 @@ class Source(object):
             raise AtomError("Entry: updated must be a datetime or an " +
                             "Updated object")
 
-        if isinstance(guid, basestring):
+        if isinstance(guid, str):
             self.elements["id"] = ID(guid)
         elif isinstance(guid, ID):
             self.elements["id"] = guid
